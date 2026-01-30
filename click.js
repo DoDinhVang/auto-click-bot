@@ -1,16 +1,17 @@
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
+import { connect } from "puppeteer-real-browser";
 puppeteer.use(StealthPlugin());
 
 (async () => {
-  const browser = await puppeteer.launch({
+  const { page, browser } = await connect({
     headless: false,
-    slowMo: 80,
+    turnstile: true,
     defaultViewport: null,
     args: ["--start-maximized"],
+    connectOption: { slowMo: 80 },
   });
 
-  const page = await browser.newPage();
   await page.setBypassCSP(true);
 
   await page.goto("https://wechoice.vn/", {
@@ -55,7 +56,7 @@ puppeteer.use(StealthPlugin());
       { visible: true, timeout: 30000 },
     );
 
-    await googlePage.type('input[type="email"]', "vangdd@gmail.com", {
+    await googlePage.type('input[type="email"]', "dodinhvang0302@gmail.com", {
       delay: 80,
     }); // ← thay email thật
     await googlePage.keyboard.press("Enter");
