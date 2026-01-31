@@ -1,108 +1,74 @@
-
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { connect } from "puppeteer-real-browser";
+import fs from "fs";
+import path from "path";
 puppeteer.use(StealthPlugin());
 
+const accounts = [
+  {
+    email: "dodinhvang0302@gmail.com",
+    password: "huu0302@",
+  },
+  {
+    email: "ptothen27n@gmail.com",
+    password: "ptothennn2005",
+  },
+  {
+    email: "pnupzire@gmail.com",
+    password: "ptothennn2005",
+  },
+];
+const candidateid = 17;
+
+const LOG_FILE = path.join(
+  "C:\\Users\\H2gaming\\Desktop\\auto-click-bot",
+  "wechoice-vote-log.txt",
+);
+
 (async () => {
-  const { page, browser } = await connect({
-    headless: false,
-    turnstile: true,
-  });
-
-  await page.setBypassCSP(true);
-
-  await page.goto("https://wechoice.vn/", {
-    waitUntil: "networkidle2",
-  });
-
-  await vote();
-  const isLogged = await checkLogged();
-  if (isLogged) {
-    return;
-  }
-  await loginWithGoogle("dodinhvang0302@gmail.com", "huu0302@");
-
-  async function checkLogged() {
-    const googleSignInSelector = "#login-popup";
-    return await page.$eval(googleSignInSelector, () => false).catch(() => true);
-  }
-  /**
-   * HANDLE LOGIN WITH GOOGLE
-   * 
-   */
-  async function loginWithGoogle(email, password) {
+  let page, browser;
+  for (const account of accounts) {
     try {
-      // Attach listener popup/tab mới TRƯỚC click
-      const popupPromise = new Promise((resolve) => {
-        const handler = async (target) => {
-          const newPg = await target.page().catch(() => null);
-          if (newPg && newPg !== page) {
-            const url = await newPg.url().catch(() => '');
-            if (url.includes('accounts.google.com') || url.includes('google.com/signin')) {
-              browser.off('targetcreated', handler);
-              console.log("Detect popup qua event! URL:", url);
-              resolve(newPg);
-            }
-          }
-        };
-        browser.on('targetcreated', handler);
-        // Fallback timeout 20s
-        setTimeout(() => {
-          browser.off('targetcreated', handler);
-          resolve(null);
-        }, 20000);
+      const connection = await connect({
+        headless: false,
+        turnstile: true,
+        connectOption: { slowMo: 80 },
       });
 
-      // Click nút
-      const googleSignInSelector = "#login-popup .g_id_signin";
-      await page.waitForSelector(googleSignInSelector, { visible: true, timeout: 60000 });
-      console.log("Nút Sign in with Google đã sẵn sàng, chuẩn bị click...");
-      await page.click(googleSignInSelector);
-      console.log("Đã click nút → chờ popup Google login...");
+      page = connection.page;
+      browser = connection.browser;
 
-      // Chờ popup (timeout 15s fallback)
-      const googlePopup = await popupPromise;
+      await page.setBypassCSP(true);
 
-      if (!googlePopup) {
-        console.log("Không mở được popup → kiểm tra xem Google có chặn hoặc dùng redirect thay vì popup không");
-        return;
+      await page.goto("https://wechoice.vn/", {
+        waitUntil: ["networkidle2", "domcontentloaded"],
+      });
+
+      await vote();
+      const isLogged = await checkLogged();
+      if (isLogged) {
+        continue;
       }
+      await loginWithGoogle(account.email, account.password);
 
-      await googlePopup.bringToFront();
-      await googlePopup.setViewport({ width: 1280, height: 800 }); // optional, giúp ổn định
-
-      // Selector email (cập nhật 2026: #identifierId là ổn định nhất)
-      const emailSelector = '#identifierId, input[type="email"], input[name="identifier"]';
-      await googlePopup.waitForSelector(emailSelector, { visible: true, timeout: 45000 });
-      console.log("Email field hiện trong popup!");
-      await googlePopup.type(emailSelector, email, { delay: 60 });
-      await googlePopup.keyboard.press('Enter');
-
-      // Password
-      const passSelector = 'input[type="password"], input[name="Passwd"], input[autocomplete="current-password"]';
-      await googlePopup.waitForSelector(passSelector, { visible: true, timeout: 45000 });
-      await googlePopup.type(passSelector, password, { delay: 60 });
-      await googlePopup.keyboard.press('Enter');
-
-      console.log("Đã điền email + password trong popup, chờ redirect về trang gốc...");
-
-      // Chờ 5-10s hoặc check logged in trên page chính
-      await page.waitForTimeout(8000);
-      // Optional: await page.waitForSelector(selector_cua_user_logged_in, { timeout: 20000 });
-
+      await page.waitForNavigation({
+        waitUntil: ["networkidle2", "domcontentloaded"],
+        timeout: 120000,
+      });
+      await vote();
+      await new Promise((r) => setTimeout(r, 8000));
+      await browser.close();
     } catch (error) {
-      console.error("Lỗi loginWithGoogle:", error.message || error);
-      if (error.message.includes('Timeout')) {
-        console.log("→ Timeout: Popup có mở không? Có thông báo 'This browser may not be secure' không?");
-      }
+      appendToLog(`LỖI với ${account.email}: ${error.message || error}`);
     }
   }
+
   /**
- * HANDLE CLICK VOTE BUTTON
- */
+   * HANDLE CLICK VOTE BUTTON
+   */
   async function vote() {
-    const btnSelector = 'li[candidateid="61"] a.js-vote-action';
+    const btnSelector = `li[candidateid="${candidateid}"] a.js-vote-action`;
 
     await page.waitForSelector(btnSelector, { visible: true });
 
@@ -127,79 +93,94 @@ puppeteer.use(StealthPlugin());
       document.querySelector(sel).click();
     }, btnSelector);
 
-    console.log("Clicked candidate 61");
+    console.log(`Clicked candidate ${candidateid}`);
   }
+  /**
+   * Check user is logged
+   * @returns boolean
+   */
+  async function checkLogged() {
+    const googleSignInSelector = "#login-popup";
+    return await page
+      .$eval(googleSignInSelector, () => false)
+      .catch(() => true);
+  }
+  /**
+   * HANDLE LOGIN WITH GOOGLE
+   */
+  async function loginWithGoogle(email, password) {
+    try {
+      const googleSignInSelector = "#login-popup .g_id_signin";
+      await page.waitForSelector(googleSignInSelector, {
+        visible: true,
+        timeout: 60000,
+      });
 
-  return;
-  const loginBtn = await page.$("#btn-open-popup-login");
+      const newPagePromise = new Promise((resolve) =>
+        browser.once("targetcreated", (target) => resolve(target.page())),
+      );
+      await page.click(googleSignInSelector);
 
-  if (loginBtn) {
-    console.log("Chưa login → Mở popup và đăng nhập Google...");
+      const googlePage = await newPagePromise;
+      if (!googlePage) {
+        console.log("Google account not open");
+        return;
+      }
 
-    await loginBtn.click();
+      await googlePage.bringToFront();
+      await googlePage.setDefaultTimeout(60000);
 
-    await page.waitForSelector("#login-popup .g_id_signin", {
-      visible: true,
-      timeout: 15000,
-    });
+      // Fill email
+      const emailSelector =
+        '#identifierId, input[type="email"], input[name="identifier"]';
+      await googlePage.waitForSelector(emailSelector, {
+        visible: true,
+        timeout: 600000, //10 minutes
+      });
+      await googlePage.type(emailSelector, email, { delay: 60 });
+      await googlePage.keyboard.press("Enter");
 
-    console.log("→ Click nút Google...");
-
-    const newPagePromise = new Promise((resolve) =>
-      browser.once("targetcreated", (target) => resolve(target.page())),
-    );
-
-    await page.click("#login-popup .g_id_signin");
-
-    const googlePage = await newPagePromise;
-    if (!googlePage) {
-      throw new Error("Không mở được trang Google login!");
+      // Fill password
+      const passSelector =
+        'input[type="password"], input[name="Passwd"], input[autocomplete="current-password"]';
+      await googlePage.waitForSelector(passSelector, {
+        visible: true,
+        timeout: 600000, //10 minutes
+      });
+      await googlePage.type(passSelector, password, { delay: 60 });
+      await googlePage.keyboard.press("Enter");
+      // await new Promise((resolve) => setTimeout(resolve, 120000));
+      await checkLogged();
+    } catch (error) {
+      console.error("Lỗi loginWithGoogle:", error.message || error);
     }
-
-    await googlePage.bringToFront();
-
-    console.log("→ Trang Google login đã mở → Đang điền email...");
-
-    await googlePage.setDefaultTimeout(60000);
-
-    await googlePage.waitForSelector(
-      'input[type="email"], input[name="identifier"], input[autocomplete="username"]',
-      { visible: true, timeout: 30000 },
-    );
-
-    await googlePage.type('input[type="email"]', "dodinhvang0302@gmail.com", {
-      delay: 80,
-    }); // ← thay email thật
-    await googlePage.keyboard.press("Enter");
-
-    // Thay waitForTimeout bằng delay
-    await new Promise((resolve) => setTimeout(resolve, 3500)); // chờ 3.5s để màn hình pass load
-
-    await googlePage.waitForSelector(
-      'input[type="password"], input[name="Passwd"], input[autocomplete="current-password"]',
-      { visible: true, timeout: 30000 },
-    );
-
-    await googlePage.type('input[type="password"]', "huu0302@", {
-      delay: 80,
-    }); // ← thay pass thật
-    await googlePage.keyboard.press("Enter");
-
-    console.log("→ Đã submit login Google → Chờ quay về WeChoice...");
-
-    // Chờ nút login header biến mất (đã login thành công)
-    await page.waitForSelector("#btn-open-popup-login", {
-      hidden: true,
-      timeout: 60000,
-    });
-    console.log("Đăng nhập thành công!");
-  } else {
-    console.log("Đã login sẵn!");
   }
+  // Hàm ghi log chung (append, không ghi đè)
+  function appendToLog(message) {
+    const now = new Date();
+    // Format giờ Việt Nam: DD/MM/YYYY HH:mm:ss
+    const timestamp = now.toLocaleString("vi-VN", {
+      timeZone: "Asia/Ho_Chi_Minh",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
 
-  // === PHẦN VOTE ===
+    const logLine = `[${timestamp}] ${message}\n`;
 
-  // await browser.close();
+    // Ghi ra console trước
+    console.log(logLine.trim());
+
+    // Ghi vào file (append)
+    fs.appendFile(LOG_FILE, logLine, "utf8", (err) => {
+      if (err) {
+        console.error(`❌ KHÔNG GHI ĐƯỢC FILE LOG: ${err.message}`);
+        console.error(`→ Kiểm tra quyền ghi file ở thư mục: ${__dirname}`);
+      }
+    });
+  }
 })();
-
-

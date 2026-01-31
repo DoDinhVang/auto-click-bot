@@ -1,0 +1,22 @@
+[10:57:22 31/01/2026] LỖI với ptothen27n@gmail.com: Navigation timeout of 30000 ms exceeded
+[10:59:38 31/01/2026] LỖI với pnupzire@gmail.com: Navigation timeout of 30000 ms exceeded
+[11:10:00 31/01/2026] LỖI với ptothen27n@gmail.com: Navigating frame was detached
+[11:10:02 31/01/2026] LỖI với pnupzire@gmail.com: Protocol error (Page.navigate): Target closed
+[11:13:28 31/01/2026] LỖI với ptothen27n@gmail.com: Navigation timeout of 30000 ms exceeded
+[11:14:53 31/01/2026] LỖI với pnupzire@gmail.com: Navigation timeout of 30000 ms exceeded
+[11:21:14 31/01/2026] LỖI với ptothen27n@gmail.com: Attempted to use detached Frame '714708BE0354EFAF671032881901F7BB'.
+[11:21:16 31/01/2026] LỖI với pnupzire@gmail.com: Navigating frame was detached
+[11:26:06 31/01/2026] LỖI với ptothen27n@gmail.com: Navigating frame was detached
+[11:32:29 31/01/2026] LỖI với dodinhvang0302@gmail.com: Navigating frame was detached
+[11:45:38 31/01/2026] LỖI với ptothen27n@gmail.com: Navigation timeout of 30000 ms exceeded
+[11:46:09 31/01/2026] LỖI với pnupzire@gmail.com: Navigation timeout of 30000 ms exceeded
+[11:48:13 31/01/2026] LỖI với ptothen27n@gmail.com: Navigating frame was detached
+[11:48:15 31/01/2026] LỖI với pnupzire@gmail.com: Protocol error (Page.navigate): Target closed
+[11:50:35 31/01/2026] LỖI với ptothen27n@gmail.com: Navigation timeout of 30000 ms exceeded
+[11:52:00 31/01/2026] LỖI với pnupzire@gmail.com: Navigating frame was detached
+[11:54:06 31/01/2026] LỖI với ptothen27n@gmail.com: Attempted to use detached Frame '887D7950036E03525BAA5125D6331322'.
+[11:54:08 31/01/2026] LỖI với pnupzire@gmail.com: Protocol error (Page.setBypassCSP): Target closed
+[11:55:13 31/01/2026] LỖI với ptothen27n@gmail.com: Navigating frame was detached
+[11:55:15 31/01/2026] LỖI với pnupzire@gmail.com: Protocol error (Page.navigate): Target closed
+[11:58:56 31/01/2026] LỖI với ptothen27n@gmail.com: Navigating frame was detached
+[11:58:59 31/01/2026] LỖI với pnupzire@gmail.com: Navigating frame was detached
